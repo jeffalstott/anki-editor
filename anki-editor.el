@@ -234,8 +234,8 @@ The result is the path to the newly stored media file."
      :transcoders '((latex-fragment . anki-editor--ox-latex)
                     (latex-environment . anki-editor--ox-latex)))))
 
-(defconst anki-editor--ox-export-ext-plist
-  '(:with-toc nil :anki-editor-mode t))
+(defvar anki-editor--ox-export-ext-plist
+  '(:with-toc nil :anki-editor-mode t :with-properites nil))
 
 (defun anki-editor--translate-latex-delimiters (latex-code)
   (catch 'done
