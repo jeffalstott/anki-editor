@@ -81,6 +81,12 @@
   "Customizations for anki-editor."
   :group 'org)
 
+(defcustom anki-editor-match-tag "ankinote"
+  "The match expression for selecting notes to upload to anki.
+
+A match for a non-empty `anki-editor-prop-note-type' property will be appended automatically."
+  :group 'anki-editor)
+
 (defcustom anki-editor-break-consecutive-braces-in-latex
   nil
   "If non-nil, consecutive `}' will be automatically separated by spaces to prevent early-closing of cloze.
@@ -380,8 +386,10 @@ The implementation is borrowed and simplified from ox-html."
   "Simple wrapper that calls `org-map-entries' with `&ANKI_NOTE_TYPE<>\"\"' appended to MATCH."
   ;; disable property inheritance temporarily, or all subheadings of a
   ;; note heading will be counted as note headings as well
-  (let ((org-use-property-inheritance nil))
-    (org-map-entries func (concat match "&" anki-editor-prop-note-type "<>\"\"") scope skip)))
+  (let ((org-use-property-inheritance (list anki-editor-prop-note-type)))
+    (org-map-entries func (concat match "&" "+" anki-editor-match-tag
+                                  "&" anki-editor-prop-note-type "<>\"\"")
+                     scope skip)))
 
 (defun anki-editor--insert-note-skeleton (prefix deck heading note-type fields)
   "Insert a note subtree (skeleton) with HEADING, NOTE-TYPE and FIELDS.
