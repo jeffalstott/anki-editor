@@ -521,7 +521,7 @@ Where the subtree is created depends on PREFIX."
   (let ((org-trust-scanner-tags t)
         (deck (org-entry-get-with-inheritance anki-editor-prop-deck))
         (note-id (org-entry-get nil anki-editor-prop-note-id))
-        (note-type (org-entry-get nil anki-editor-prop-note-type))
+        (note-type (org-entry-get nil anki-editor-prop-note-type 'selective))
         (tags (anki-editor--get-tags))
         (fields (anki-editor--build-fields)))
 
