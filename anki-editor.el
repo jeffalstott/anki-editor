@@ -560,8 +560,7 @@ Where the subtree is created depends on PREFIX."
 (defun anki-editor--build-fields ()
   "Build a list of fields from subheadings of current heading, each element of which is a cons cell, the car of which is field name and the cdr of which is field content."
   (save-excursion
-    (let (fields
-          (point-of-last-child (point)))
+    (let (fields)
       (let* ((inhibit-message t)  ;; suppress echo message from `org-babel-exp-src-block'
              (field-heading (org-element-at-point))
              (field-name (substring-no-properties
