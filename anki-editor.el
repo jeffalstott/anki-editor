@@ -567,7 +567,10 @@ Where the subtree is created depends on PREFIX."
                           (org-element-property
                            :raw-value
                            field-heading)))
-             (contents-begin (org-element-property :contents-begin field-heading))
+             (contents-begin (save-excursion
+                               ;; Skip the properties drawer and other metadata.
+                               (org-end-of-meta-data 'full)
+                               (point)))
              (contents-end (org-element-property :contents-end field-heading)))
 
         (push (cons "Front" field-name) fields)
