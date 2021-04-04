@@ -417,7 +417,9 @@ Where the subtree is created depends on PREFIX."
   "Request AnkiConnect for updating or creating NOTE."
   (if (= (alist-get 'note-id note) -1)
       (anki-editor--create-note note)
-    (anki-editor--update-note note)))
+    (condition-case _
+        (anki-editor--update-note note)
+      (error (anki-editor--create-note note)))))
 
 (defun anki-editor--set-note-id (id)
   (unless id
