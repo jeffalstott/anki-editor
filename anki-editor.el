@@ -68,14 +68,14 @@
 (require 'ox-html)
 (require 'request)
 
-(defconst anki-editor-prop-note-type "ANKI_NOTE_TYPE")
-(defconst anki-editor-prop-note-id "ANKI_NOTE_ID")
-(defconst anki-editor-prop-deck "ANKI_DECK")
-(defconst anki-editor-prop-tags "ANKI_TAGS")
-(defconst anki-editor-prop-tags-plus (concat anki-editor-prop-tags "+"))
-(defconst anki-editor-prop-failure-reason "ANKI_FAILURE_REASON")
-(defconst anki-editor-buffer-html-output "*AnkiEditor HTML Output*")
-(defconst anki-editor-org-tag-regexp "^\\([[:alnum:]_@#%]+\\)+$")
+(defvar anki-editor-prop-note-type "ANKI_NOTE_TYPE")
+(defvar anki-editor-prop-note-id "ANKI_ID")
+(defvar anki-editor-prop-deck "ANKI_DECK")
+(defvar anki-editor-prop-tags "ANKI_TAGS")
+(defvar anki-editor-prop-tags-plus (concat anki-editor-prop-tags "+"))
+(defvar anki-editor-prop-failure-reason "ANKI_FAILURE_REASON")
+(defvar anki-editor-buffer-html-output "*AnkiEditor HTML Output*")
+(defvar anki-editor-org-tag-regexp "^\\([[:alnum:]_@#%]+\\)+$")
 
 (defgroup anki-editor nil
   "Customizations for anki-editor."
@@ -223,7 +223,7 @@ The result is the path to the newly stored media file."
 
 ;;; Org Export Backend
 
-(defconst anki-editor--ox-anki-html-backend
+(defvar anki-editor--ox-anki-html-backend
   (if anki-editor-use-math-jax
       (org-export-create-backend
        :parent 'html
