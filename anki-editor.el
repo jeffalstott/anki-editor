@@ -681,8 +681,8 @@ of that heading."
          (failed 0))
     (anki-editor-map-note-entries
      (lambda ()
-       (message "[%d/%d] Processing notes in buffer \"%s\", wait a moment..."
-                (cl-incf acc) total (buffer-name))
+       (message "[%d/%d] Processing notes in buffer \"%s\", wait a moment... [%d failed]"
+                (cl-incf acc) total (buffer-name) failed)
        (anki-editor--clear-failure-reason)
        (condition-case-unless-debug err
            (anki-editor--push-note (anki-editor-note-at-point))
