@@ -68,24 +68,18 @@
 (require 'ox-html)
 (require 'request)
 
-(defvar anki-editor-prop-note-type "ANKI_NOTE_TYPE")
-(defvar anki-editor-prop-note-id "ANKI_ID")
-(defvar anki-editor-prop-deck "ANKI_DECK")
-(defvar anki-editor-prop-tags "ANKI_TAGS")
-(defvar anki-editor-prop-tags-plus (concat anki-editor-prop-tags "+"))
-(defvar anki-editor-prop-failure-reason "ANKI_FAILURE_REASON")
-(defvar anki-editor-buffer-html-output "*AnkiEditor HTML Output*")
-(defvar anki-editor-org-tag-regexp "^\\([[:alnum:]_@#%]+\\)+$")
+(defconst anki-editor-prop-note-type "ANKI_NOTE_TYPE")
+(defconst anki-editor-prop-note-id "ANKI_NOTE_ID")
+(defconst anki-editor-prop-deck "ANKI_DECK")
+(defconst anki-editor-prop-tags "ANKI_TAGS")
+(defconst anki-editor-prop-tags-plus (concat anki-editor-prop-tags "+"))
+(defconst anki-editor-prop-failure-reason "ANKI_FAILURE_REASON")
+(defconst anki-editor-buffer-html-output "*AnkiEditor HTML Output*")
+(defconst anki-editor-org-tag-regexp "^\\([[:alnum:]_@#%]+\\)+$")
 
 (defgroup anki-editor nil
   "Customizations for anki-editor."
   :group 'org)
-
-(defcustom anki-editor-match-tag "ankinote"
-  "The match expression for selecting notes to upload to anki.
-
-A match for a non-empty `anki-editor-prop-note-type' property will be appended automatically."
-  :group 'anki-editor)
 
 (defcustom anki-editor-break-consecutive-braces-in-latex
   nil
@@ -223,7 +217,7 @@ The result is the path to the newly stored media file."
 
 ;;; Org Export Backend
 
-(defvar anki-editor--ox-anki-html-backend
+(defconst anki-editor--ox-anki-html-backend
   (if anki-editor-use-math-jax
       (org-export-create-backend
        :parent 'html
@@ -234,8 +228,8 @@ The result is the path to the newly stored media file."
      :transcoders '((latex-fragment . anki-editor--ox-latex)
                     (latex-environment . anki-editor--ox-latex)))))
 
-(defvar anki-editor--ox-export-ext-plist
-  '(:with-toc nil :anki-editor-mode t :with-properites nil))
+(defconst anki-editor--ox-export-ext-plist
+  '(:with-toc nil :anki-editor-mode t))
 
 (defun anki-editor--translate-latex-delimiters (latex-code)
   (catch 'done
@@ -386,10 +380,8 @@ The implementation is borrowed and simplified from ox-html."
   "Simple wrapper that calls `org-map-entries' with `&ANKI_NOTE_TYPE<>\"\"' appended to MATCH."
   ;; disable property inheritance temporarily, or all subheadings of a
   ;; note heading will be counted as note headings as well
-  (let ((org-use-property-inheritance (list anki-editor-prop-note-type)))
-    (org-map-entries func (concat match "&" "+" anki-editor-match-tag
-                                  "&" anki-editor-prop-note-type "<>\"\"")
-                     scope skip)))
+  (let ((org-use-property-inheritance nil))
+    (org-map-entries func (concat match "&" anki-editor-prop-note-type "<>\"\"") scope skip)))
 
 (defun anki-editor--insert-note-skeleton (prefix deck heading note-type fields)
   "Insert a note subtree (skeleton) with HEADING, NOTE-TYPE and FIELDS.
@@ -417,9 +409,7 @@ Where the subtree is created depends on PREFIX."
   "Request AnkiConnect for updating or creating NOTE."
   (if (= (alist-get 'note-id note) -1)
       (anki-editor--create-note note)
-    (condition-case _
-        (anki-editor--update-note note)
-      (error (anki-editor--create-note note)))))
+    (anki-editor--update-note note)))
 
 (defun anki-editor--set-note-id (id)
   (unless id
@@ -531,7 +521,7 @@ Where the subtree is created depends on PREFIX."
   (let ((org-trust-scanner-tags t)
         (deck (org-entry-get-with-inheritance anki-editor-prop-deck))
         (note-id (org-entry-get nil anki-editor-prop-note-id))
-        (note-type (org-entry-get nil anki-editor-prop-note-type 'selective))
+        (note-type (org-entry-get nil anki-editor-prop-note-type))
         (tags (anki-editor--get-tags))
         (fields (anki-editor--build-fields)))
 
@@ -562,41 +552,41 @@ Where the subtree is created depends on PREFIX."
 (defun anki-editor--build-fields ()
   "Build a list of fields from subheadings of current heading, each element of which is a cons cell, the car of which is field name and the cdr of which is field content."
   (save-excursion
-    (let (fields)
-      (let* ((inhibit-message t)  ;; suppress echo message from `org-babel-exp-src-block'
-             (field-heading (org-element-at-point))
-             (field-name (substring-no-properties
-                          (org-element-property
-                           :raw-value
-                           field-heading)))
-             (contents-begin (save-excursion
-                               ;; Skip the properties drawer and other metadata.
-                               (org-end-of-meta-data 'full)
-                               (point)))
-             (contents-end (org-element-property :contents-end field-heading)))
+    (let (fields
+          (point-of-last-child (point)))
+      (when (org-goto-first-child)
+        (while (/= point-of-last-child (point))
+          (setq point-of-last-child (point))
+          (let* ((inhibit-message t)  ;; suppress echo message from `org-babel-exp-src-block'
+                 (field-heading (org-element-at-point))
+                 (field-name (substring-no-properties
+                              (org-element-property
+                               :raw-value
+                               field-heading)))
+                 (contents-begin (org-element-property :contents-begin field-heading))
+                 (contents-end (org-element-property :contents-end field-heading)))
 
-        (push (cons "Front" field-name) fields)
-        (push (cons "Back"
-                    (cond
-                     ((and contents-begin contents-end)
-                      (or (org-export-string-as
-                           (buffer-substring
-                            contents-begin
-                            ;; in case the buffer is narrowed,
-                            ;; e.g. by `org-map-entries' when
-                            ;; scope is `tree'
-                            (min (point-max) contents-end))
-                           anki-editor--ox-anki-html-backend
-                           t
-                           anki-editor--ox-export-ext-plist)
+            (push (cons field-name
+                        (cond
+                         ((and contents-begin contents-end) (or (org-export-string-as
+                                                                 (buffer-substring
+                                                                  contents-begin
+                                                                  ;; in case the buffer is narrowed,
+                                                                  ;; e.g. by `org-map-entries' when
+                                                                  ;; scope is `tree'
+                                                                  (min (point-max) contents-end))
+                                                                 anki-editor--ox-anki-html-backend
+                                                                 t
+                                                                 anki-editor--ox-export-ext-plist)
 
-                          ;; 8.2.10 version of
-                          ;; `org-export-filter-apply-functions'
-                          ;; returns nil for an input of empty string,
-                          ;; which will cause AnkiConnect to fail
-                          ""))
-                     (t "")))
-              fields))
+                                                                ;; 8.2.10 version of
+                                                                ;; `org-export-filter-apply-functions'
+                                                                ;; returns nil for an input of empty string,
+                                                                ;; which will cause AnkiConnect to fail
+                                                                ""))
+                         (t "")))
+                  fields)
+            (org-forward-heading-same-level nil t))))
       (reverse fields))))
 
 
@@ -681,8 +671,8 @@ of that heading."
          (failed 0))
     (anki-editor-map-note-entries
      (lambda ()
-       (message "[%d/%d] Processing notes in buffer \"%s\", wait a moment... [%d failed]"
-                (cl-incf acc) total (buffer-name) failed)
+       (message "[%d/%d] Processing notes in buffer \"%s\", wait a moment..."
+                (cl-incf acc) total (buffer-name))
        (anki-editor--clear-failure-reason)
        (condition-case-unless-debug err
            (anki-editor--push-note (anki-editor-note-at-point))
